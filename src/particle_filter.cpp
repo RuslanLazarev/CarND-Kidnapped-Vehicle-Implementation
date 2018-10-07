@@ -17,7 +17,7 @@
 
 #include "particle_filter.h"
 
-#define EPS 0.001
+#define EPS 0.0001
 
 using namespace std;
 
@@ -29,7 +29,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	std::default_random_engine gen;
 
 	if (is_initialized) {
-		return
+		return;
 	}
 	num_particles = 128;
 
@@ -43,10 +43,9 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.x = noise_x(gen);
 		particle.y = noise_y(gen);
 		particle.theta = noise_theta(gen);
-		particle.weight = 1;
+		particle.weight = 1.0;
 
 		particles.push_back(particle);
-		weights.push_back(1);
 	}
 
 	is_initialized = true;
@@ -91,6 +90,25 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	//   observed measurement to this particular landmark.
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
+		for(unsigned int i = 0; i < observations.size(); i++) {
+		unsigned int nObs = observations.size();
+		unsigned int nPred = predicted.size();
+		for(unsigned int i = 0; i < nObs; i++) { // For each observation
+			double minDist = numeric_limits<double>::max();
+			int mapId = -1;
+			for(unsigned j = 0; j < nPred; j++ ) { // For each predition.
+				double xDist = observations[i].x - predicted[j].x;
+				double yDist = observations[i].y - predicted[j].y;
+				double distance = xDist * xDist + yDist * yDist;
+				if(distance < minDist) {
+					minDist = distance;
+					mapId = predicted[j].id;
+				}
+				observations[i].id = mapId;
+			}
+		}
+	}
+}
 
 }
 
@@ -147,10 +165,32 @@ void ParticleFilter::resample() {
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
 	default_random_engine gen;
-	discrete_distribution<int> distribution(weights.begin(), weights.end());
+
+	vector<double> weights;
+	for(int i = 0; i < num_particles; i++) {
+		weights.push_back(particles[i].weight);
+	}
+
+	// index for resampling wheel
+	uniform_int_distribution<int> int_dist(0, num_particles-1);
+	auto index = int_dist(gen);
+
+	double max_weight = *max_element(weights.begin(), weights.end());
+    uniform_real_distribution<double> real_dist(0.0, max_weight)
 
 	vector<Particle> resampled_particles;
 
+	double beta = 0.0;
+	for(int i = 0; i < num_particles; i++) {
+		beta += real_dist(gen)*2.0;
+		while (beta > weights[index]) {
+			beta -= weights[index];
+			index = (index + 1) % num_particles;
+		}
+		resampled_particles.puch_back(particles[index]);
+	}
+
+	particles = resampled_particles;
 }
 
 Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<int>& associations,
