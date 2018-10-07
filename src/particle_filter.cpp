@@ -131,14 +131,19 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 	vector<LandmarkObs> trans_observations;
 	LandmarkObs obs;
-	
 
-	for (int i = 0; i < num_particles; i++) {
-		// extract variables for better readibility
-		double x = particles[i].x;
-		double y = particles[i].y;
-		double theta = particles[i].theta;
+	for (int i = 0; i < observations.size(); i++) {
+		LandmarkObs trans_obs;
+		obs = observation[i];
 
+		trans_obs.x = particle[p].x + (obs.x*cos(particles[p].theta) - obs.y*sin(particles[p].theta));
+		trans_obs.y = particles[p].y + (obs.x*sin(particles[p].theta) - obs.y*cos(particles[p].theta));
+		trans_observations.push_back(trans_obs);
+	}
+
+	particles[p].weight = 1.0;
+
+	for(int i = 0; i < trans_observations,size(); i++) {
 
 		std::vector<LandmarkObs> mapped_observations = mapObservations(observations, x, y, theta);
 		
@@ -146,16 +151,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		weights[p] = particles[p].weight;
 	}
 
-}
-
-std::vector<LandmarkObs> ParticleFilter::mapObservations(const std::vector<LandmarkObs> &observations, double x_t, double y_t, double theta) {
-	std::vector<LandmarkObs> map_observations;
-	for (int j = 0; j < observations.size(); j++) {
-		double map_x = observations[j].x * cos(theta) - observations[j].y * sin(theta) + x_t;
-		double map_y = observations[j].x * sin(theta) + observations[j].y * cos(theta) + y_t;
-		map_observations.push_back(LandmarkObs{ observations[j].id, map_x, map_y });
-	}
-	return map_observations;
 }
 
 
@@ -169,6 +164,7 @@ void ParticleFilter::resample() {
 	vector<double> weights;
 	for(int i = 0; i < num_particles; i++) {
 		weights.push_back(particles[i].weight);
+
 	}
 
 	// index for resampling wheel
