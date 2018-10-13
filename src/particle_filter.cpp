@@ -124,31 +124,31 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   http://planning.cs.uiuc.edu/node99.html
 
 	for (int k = 0; k < num_particles; k++) {
-		vector<int> assocoations;
+		vector<int> associations;
 		vector<double> sense_x;
 		vector<double> sense_y;
 
 		std::vector<LandmarkObs> trans_observations;
 		LandmarkObs obs;
-		LandmarkObs t_o;
+		LandmarkObs t_obs;
 		Particle particle = particles[k];
 
 		for (unsigned int j = 0; j < observations.size(); j++) {
-			obs = observation[j];
+			obs = observations[j];
 
-			trans_obs.x = particle.x + (obs.x*cos(particle.theta) - obs.y*sin(particle.theta));
-			trans_obs.y = particle.y + (obs.x*sin(particle.theta) - obs.y*cos(particle.theta));
+			t_obs.x = particle.x + (obs.x*cos(particle.theta) - obs.y*sin(particle.theta));
+			t_obs.y = particle.y + (obs.x*sin(particle.theta) - obs.y*cos(particle.theta));
 			trans_observations.push_back(trans_obs);
 		}
 
-		particles[p].weight = 1.0;
+		particles[k].weight = 1.0;
 		double closest_value = sensor_range*sensor_range;
 
 		for(unsigned int i = 0; i < trans_observations.size(); i++) {
 			LandmarkObs obs = trans_observations[i];
 			int minIndex = 0;
 
-			for (int m = 0; m < map_landmarks.landmark_list.size(); m++) {
+			for (unsigned int m = 0; m < map_landmarks.landmark_list.size(); m++) {
 				double landmark_x = map_landmarks.landmark_list[m].x_f;
 				double landmark_y = map_landmarks.landmark_list[m].y_f;
 
@@ -176,7 +176,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		}
 
 		weights[k] = particles[p].weight;
-		particles[k] = SetAssociations(particles[k],associattions,sense_x, sense_y);
+		particles[k] = SetAssociations(particles[k],associations,sense_x, sense_y);
 		
 	}
 }
@@ -200,7 +200,7 @@ void ParticleFilter::resample() {
 	auto index = int_dist(gen);
 
 	double max_weight = *max_element(weights.begin(), weights.end());
-    uniform_real_distribution<double> real_dist(0.0, max_weight)
+    uniform_real_distribution<double> real_dist(0.0, max_weight);
 
 	vector<Particle> resampled_particles;
 
@@ -233,6 +233,8 @@ Particle ParticleFilter::SetAssociations(Particle& particle, const std::vector<i
 	particle.associations = associations;
 	particle.sense_x = sense_x;
 	particle.sense_y = sense_y;
+
+	return particle;
 }
 
 string ParticleFilter::getAssociations(Particle best)
