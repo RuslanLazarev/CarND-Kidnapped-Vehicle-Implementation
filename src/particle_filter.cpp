@@ -138,7 +138,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 
 			t_obs.x = particle.x + (obs.x*cos(particle.theta) - obs.y*sin(particle.theta));
 			t_obs.y = particle.y + (obs.x*sin(particle.theta) - obs.y*cos(particle.theta));
-			trans_observations.push_back(trans_obs);
+			trans_observations.push_back(t_obs);
 		}
 
 		particles[k].weight = 1.0;
@@ -175,7 +175,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 			sense_y.push_back(y);
 		}
 
-		weights[k] = particles[p].weight;
+		weights[k] = particles[k].weight;
 		particles[k] = SetAssociations(particles[k],associations,sense_x, sense_y);
 		
 	}
@@ -211,7 +211,7 @@ void ParticleFilter::resample() {
 			beta -= weights[index];
 			index = (index + 1) % num_particles;
 		}
-		resampled_particles.puch_back(particles[index]);
+		resampled_particles.push_back(particles[index]);
 	}
 
 	particles = resampled_particles;
