@@ -125,31 +125,66 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 	//   3.33
 	//   http://planning.cs.uiuc.edu/node99.html
 
-	vector<int> assocoations;
-	vector<double> sense_x;
-	vector<double> sense_y;
+	for (int k = 0; k < num_particles; k++) {
+		vector<int> assocoations;
+		vector<double> sense_x;
+		vector<double> sense_y;
 
-	vector<LandmarkObs> trans_observations;
-	LandmarkObs obs;
+		std::vector<LandmarkObs> trans_observations;
+		LandmarkObs obs;
+		LandmarkObs t_o;
+		Particle particle = particles[k];
 
-	for (int i = 0; i < observations.size(); i++) {
-		LandmarkObs trans_obs;
-		obs = observation[i];
+		for (unsigned int j = 0; j < observations.size(); j++) {
+			obs = observation[j];
 
-		trans_obs.x = particle[p].x + (obs.x*cos(particles[p].theta) - obs.y*sin(particles[p].theta));
-		trans_obs.y = particles[p].y + (obs.x*sin(particles[p].theta) - obs.y*cos(particles[p].theta));
-		trans_observations.push_back(trans_obs);
-	}
+			trans_obs.x = particle.x + (obs.x*cos(particle.theta) - obs.y*sin(particle.theta));
+			trans_obs.y = particle.y + (obs.x*sin(particle.theta) - obs.y*cos(particle.theta));
+			trans_observations.push_back(trans_obs);
+		}
 
-	particles[p].weight = 1.0;
+		particles[p].weight = 1.0;
+		double closest_value = sensor_range*sensor_range;
 
-	for(int i = 0; i < trans_observations,size(); i++) {
+		for(unsigned int i = 0; i < trans_observations.size(); i++) {
+			LandmarkObs obs = trans_observations[i];
+			int minIndex = 0;
 
-		std::vector<LandmarkObs> mapped_observations = mapObservations(observations, x, y, theta);
+			for (int m = 0; m < map_landmarks.landmark_list.size(); m++) {
+				double landmark_x = map_landmarks.landmark_list[m].x_f;
+				double landmark_y = map_landmarks.landmark_list[m].y_f;
+
+				double calc_value = pow(obs.x - landmark_x, 2.0) + pow(obs.y - landmark_y, 2.0);
+				if (calc_value < closest_value) {
+					closest_value = calc_value;
+					minIndex = m;
+				}
+			}
+
+			double x = obs.x;
+			double y = obs.y;
+			double mu_x = map_landmarks.landmark_list[minIndex].x_f;
+			double mu_y = map_landmarks.landmark_list[minIndex].y_f;
+			double std_x = std_landmark[0];
+			double std_y = std_landmark[1];
+
+			double mult_value = 1/(2*M_PI*std_x*std_y)*exp(-0.5*(pow((x-mu_x)/std_x, 2) + pow((y-mu_y)/std_y, 2)));
+			if (mult_value > 0) {
+				particles[k].weight *= mult_value;
+			}
+			associations.push_back(minIndex+1);
+			sense_x.push_back(x);
+			sense_y.push_back(y);
+		}
+
+		weights[k] = particles[p].weight;
+		particles[k] = SetAssociations(particles[k],associattions,sense_x, sense_y);
 		
-		particles[p] = SetAssociations(particles[p],associattions,sense_x, sense_y);
-		weights[p] = particles[p].weight;
 	}
+	
+	
+
+	
 
 }
 
