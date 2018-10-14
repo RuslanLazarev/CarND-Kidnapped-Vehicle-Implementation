@@ -131,13 +131,13 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		std::vector<LandmarkObs> trans_observations;
 		LandmarkObs obs;
 		LandmarkObs t_obs;
-		Particle particle = particles[k];
+		//Particle particle = particles[k];
 
 		for (unsigned int j = 0; j < observations.size(); j++) {
 			obs = observations[j];
 
-			t_obs.x = particle.x + (obs.x*cos(particle.theta) - obs.y*sin(particle.theta));
-			t_obs.y = particle.y + (obs.x*sin(particle.theta) - obs.y*cos(particle.theta));
+			t_obs.x = particles[k].x + (obs.x*cos(particles[k].theta) - obs.y*sin(particles[k].theta));
+			t_obs.y = particles[k].y + (obs.x*sin(particles[k].theta) + obs.y*cos(particles[k].theta));
 			trans_observations.push_back(t_obs);
 		}
 
@@ -189,11 +189,11 @@ void ParticleFilter::resample() {
 
 	default_random_engine gen;
 
-	vector<double> weights;
-	for(int i = 0; i < num_particles; i++) {
-		weights.push_back(particles[i].weight);
+	//vector<double> weights;
+	//for(int i = 0; i < num_particles; i++) {
+	//	weights.push_back(particles[i].weight);
 
-	}
+	//}
 
 	// index for resampling wheel
 	uniform_int_distribution<int> int_dist(0, num_particles-1);
@@ -206,7 +206,7 @@ void ParticleFilter::resample() {
 
 	double beta = 0.0;
 	for(int i = 0; i < num_particles; i++) {
-		beta += real_dist(gen)*2.0;
+		beta += real_dist(gen);
 		while (beta > weights[index]) {
 			beta -= weights[index];
 			index = (index + 1) % num_particles;
