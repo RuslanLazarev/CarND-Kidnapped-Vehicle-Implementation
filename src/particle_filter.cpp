@@ -131,7 +131,6 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
 		std::vector<LandmarkObs> trans_observations;
 		LandmarkObs obs;
 		LandmarkObs t_obs;
-		//Particle particle = particles[k];
 
 		for (unsigned int j = 0; j < observations.size(); j++) {
 			obs = observations[j];
@@ -188,12 +187,6 @@ void ParticleFilter::resample() {
 	//   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
 
 	default_random_engine gen;
-
-	//vector<double> weights;
-	//for(int i = 0; i < num_particles; i++) {
-	//	weights.push_back(particles[i].weight);
-
-	//}
 
 	// index for resampling wheel
 	uniform_int_distribution<int> int_dist(0, num_particles-1);
