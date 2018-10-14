@@ -31,7 +31,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	if (is_initialized) {
 		return;
 	}
-	num_particles = 128;
+	num_particles = 100;
 
 	std::normal_distribution<double> noise_x(x, std[0]);
 	std::normal_distribution<double> noise_y(y, std[1]);
@@ -46,6 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 		particle.weight = 1.0;
 
 		particles.push_back(particle);
+		weights.push_back(1);
 	}
 
 	is_initialized = true;
@@ -59,28 +60,29 @@ void ParticleFilter::prediction(double delta_t, double std_pos[], double velocit
 	//  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
 	//  http://www.cplusplus.com/reference/random/default_random_engine/
 	std::default_random_engine gen;
-
+	double new_x, new_y, new_theta;
 	
 
 	for (int i = 0; i < num_particles; i++) {
-
+		Particle p = particles[i];
 		if (fabs(yaw_rate) < EPS) {
-			particles[i].x += velocity * cos(particles[i].theta) * delta_t;
-			particles[i].y += velocity * sin(particles[i].theta) * delta_t;
+			new_x = particles[i].x + velocity * cos(particles[i].theta) * delta_t;
+			new_y = particles[i].y + velocity * sin(particles[i].theta) * delta_t;
+			new_theta = particles[i].theta;
 		}
 		else {
-			particles[i].x += (velocity / yaw_rate) * (sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
-			particles[i].y += (velocity / yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
-			particles[i].theta += yaw_rate * delta_t;
+			new_x = particles[i].x + (velocity / yaw_rate) * (sin(particles[i].theta + yaw_rate * delta_t) - sin(particles[i].theta));
+			new_y = particles[i].y + (velocity / yaw_rate) * (cos(particles[i].theta) - cos(particles[i].theta + yaw_rate * delta_t));
+			new_theta = particles[i].theta +  yaw_rate * delta_t;
 		}
 
-		std::normal_distribution<double> noise_x(0, std_pos[0]);
-		std::normal_distribution<double> noise_y(0, std_pos[1]);
-		std::normal_distribution<double> noise_theta(0, std_pos[2]);
+		std::normal_distribution<double> dist_x(new_x, std_pos[0]);
+		std::normal_distribution<double> dist_y(new_y, std_pos[1]);
+		std::normal_distribution<double> dist_theta(new_theta, std_pos[2]);
 
-		particles[i].x += noise_x(gen);
-		particles[i].y += noise_y(gen);
-		particles[i].theta += noise_theta(gen);
+		particles[i].x = dist_x(gen);
+		particles[i].y = disty(gen);
+		particles[i].theta = dist_theta(gen);
 	}
 
 }
